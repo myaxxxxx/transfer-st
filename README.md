@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Knowledge-Preserving Pluggable Modules for Multilingual Speech Translation Tasks
 
 This repository contains the code and pruned models for our manuscrpit Knowledge-Preserving Pluggable Modules for Multilingual Speech Translation Tasks. 
@@ -58,3 +59,7 @@ fairseq-train $data_dir --text-data $TEXT_DIR --tgt-lang $target \
 ```
 
 
+=======
+# transfer-st
+ 
+>>>>>>> parent of 247e552 (Update README.md)
