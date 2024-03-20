@@ -48,7 +48,7 @@ fairseq-train $data_dir --text-data $TEXT_DIR --tgt-lang $target \
   --config-yaml config_hyper.yaml --train-subset train --valid-subset dev \
   --save-dir $SAVE_DIR --num-workers 4 --max-tokens 3000000 --batch-size 32 --max-tokens-text 8192 \
   --task speech_and_text_translation --criterion speech_and_text_translation --label-smoothing 0.1 \
-  --arch quant_transformer --optimizer adam --adam-betas '(0.9, 0.98)' --lr 1e-4 --lr-scheduler inverse_sqrt --weight-decay 0.0001 \
+  --arch deltalm_transformer --optimizer adam --adam-betas '(0.9, 0.98)' --lr 1e-4 --lr-scheduler inverse_sqrt --weight-decay 0.0001 \
   --ddp-backend=legacy_ddp \
   --warmup-updates 4000 --clip-norm 0.0 --seed 1 --update-freq 2 \
   --layernorm-embedding \
@@ -85,7 +85,7 @@ fairseq-train $data_dir --text-data $TEXT_DIR --tgt-lang $target \
   --config-yaml config_hyper.yaml --train-subset train --valid-subset dev \
   --save-dir $SAVE_DIR --num-workers 4 --max-tokens 3000000 --batch-size 32 --max-tokens-text 8192 \
   --task speech_and_text_translation --criterion speech_and_text_translation --label-smoothing 0.1 \
-  --arch quant_transformer --optimizer adam --adam-betas '(0.9, 0.98)' --lr 1e-4 --lr-scheduler inverse_sqrt --weight-decay 0.0001 \
+  --arch deltalm_transformer_ffn --optimizer adam --adam-betas '(0.9, 0.98)' --lr 1e-4 --lr-scheduler inverse_sqrt --weight-decay 0.0001 \
   --ddp-backend=legacy_ddp \
   --warmup-updates 4000 --clip-norm 0.0 --seed 1 --update-freq 2 \
   --layernorm-embedding \
