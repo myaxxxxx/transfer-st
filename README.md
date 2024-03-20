@@ -1,7 +1,7 @@
 
 ## Knowledge-Preserving Pluggable Modules for Multilingual Speech Translation Tasks
 
-This repository contains the code and pruned models for our manuscrpit Knowledge-Preserving Pluggable Modules for Multilingual Speech Translation Tasks. 
+This repository contains the code of our manuscrpit Knowledge-Preserving Pluggable Modules for Multilingual Speech Translation Tasks. 
 
 
 
