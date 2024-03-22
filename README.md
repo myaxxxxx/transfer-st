@@ -5,13 +5,8 @@ This repository contains the code of our manuscrpit Knowledge-Preserving Pluggab
 
 
 
-## Quick Links
 
-- [Knowledge-Preserving Pluggable Modules for Multilingual Speech Translation Tasks](#-cofipruning-structured-pruning-learns-compact-and-accurate-models)
-<!-- - [Quick Links](#quick-links) -->
-- [Overview](##overview)
 
-- [Training](##Training)
 ## Overview
 
 
@@ -96,3 +91,19 @@ fairseq-train $data_dir --text-data $TEXT_DIR --tgt-lang $target \
   --load-pretrained-mt-encoder-decoder-from $MT_PRETRAINED_MODEL --tensorboard-logdir $SAVE_DIR  --external $EXTERNAL_DIR
 
 ```
+
+### Datasets-and-Models
+#### MuST-C Datasets
+
+- Download [MuST-C-v1](https://docs.google.com/forms/d/e/1FAIpQLSer9jNfUtxbi610n3T6diXRlANBbuzShsCje-GtKs1Sngh0YQ/viewform?pli=1) datasets. 
+
+- Preprocess spm data. 
+
+#### Speech Pre-trained Model 
+
+- We use [HuBERT-Base](https://dl.fbaipublicfiles.com/hubert/hubert_base_ls960.pt) as the speech pre-trained model for training.
+
+
+#### Machine Translation Pre-trained Model
+
+- We use [Deltalm-Base](https://deltalm.blob.core.windows.net/deltalm/deltalm-base.pt) as the machine translation pre-trained model. 
