@@ -459,23 +459,7 @@ class DeltalmTransformerModel(FairseqEncoderDecoderModel):
 
         # config.prefix_length, config.encoder_layers * 2 * config.encoder_embed_dim
         encoder =  DeltalmTransformerEncoder(transformer_encoder_config, task.target_dictionary, embed_tokens)
-        if args.frozen_plm:
-            for name, parameter in encoder.named_parameters():
-                # print(name, parameter.numel())
-                if "transformer_layers" in name:
-                    parameter.requires_grad = False
-                elif "embed_tokens" in name:
-                    parameter.requires_grad = False
-                elif "embed_positions" in name:
-                    parameter.requires_grad = False
-                elif "layernorm_embedding" in name:
-                    parameter.requires_grad = False          
-                # elif "dim_proj" in name:
-                #     parameter.requires_grad = True
-                #     print("dim_proj", name)
-                #     exit()
-                else:
-                    parameter.requires_grad = True 
+
       
 
         total_num = sum(p.numel() for p in encoder.parameters())
@@ -493,13 +477,7 @@ class DeltalmTransformerModel(FairseqEncoderDecoderModel):
     def build_decoder(cls, args, task, embed_tokens):
 
         decoder = DeltaLMDecoder(TransformerConfig.from_namespace(args), task.target_dictionary, embed_tokens)
-        if args.frozen_plm:
-            for name, parameter in decoder.named_parameters():
-                print(name, parameter.numel())
-                if "adapters" in name:
-                    parameter.requires_grad = True
-                else:
-                    parameter.requires_grad = False
+
         decoder_total_num = sum(p.numel() for p in decoder.parameters())
         decoder_trainable_num = sum(p.numel() for p in decoder.parameters() if p.requires_grad)
         print({'Total': decoder_total_num, 'Trainable': decoder_trainable_num})
