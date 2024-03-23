@@ -195,7 +195,7 @@ def upgrade_state_dict_for_deltalm(args,
 
     return state_dict
 
-@register_model("deltalm_transformer_adapter_emd")
+@register_model("deltalm_transformer")
 class DeltalmTransformerModel(FairseqEncoderDecoderModel):
     """Adapted Transformer model (https://arxiv.org/abs/1706.03762) for
     speech-to-text tasks. The Transformer encoder/decoder remains the same.
@@ -452,39 +452,16 @@ class DeltalmTransformerModel(FairseqEncoderDecoderModel):
         transformer_encoder_config = TransformerConfig.from_namespace(args)
 
 
-        transformer_encoder_config.adapters_activation_fn = args.adapters_activation_fn
-        transformer_encoder_config.adapters_bottle = args.adapters_bottle
-        transformer_encoder_config.adapters_static_layernorm =  args.adapters_static_layernorm  
-
 
         # config.prefix_length, config.encoder_layers * 2 * config.encoder_embed_dim
         encoder =  DeltalmTransformerEncoder(transformer_encoder_config, task.target_dictionary, embed_tokens)
-        if args.frozen_plm:
-            for name, parameter in encoder.named_parameters():
-                # print(name, parameter.numel())
-                if "transformer_layers" in name:
-                    parameter.requires_grad = False
-                elif "embed_tokens" in name:
-                    parameter.requires_grad = False
-                elif "embed_positions" in name:
-                    parameter.requires_grad = False
-                elif "layernorm_embedding" in name:
-                    parameter.requires_grad = False          
-                # elif "dim_proj" in name:
-                #     parameter.requires_grad = True
-                #     print("dim_proj", name)
-                #     exit()
-                else:
-                    parameter.requires_grad = True 
+
       
 
         total_num = sum(p.numel() for p in encoder.parameters())
         trainable_num = sum(p.numel() for p in encoder.parameters() if p.requires_grad)
         print({'Total': total_num, 'Trainable': trainable_num}) 
 
-        # print(encoder)        
-        # print(encoder)
-        # exit()  
         return encoder
 
 
@@ -493,13 +470,7 @@ class DeltalmTransformerModel(FairseqEncoderDecoderModel):
     def build_decoder(cls, args, task, embed_tokens):
 
         decoder = DeltaLMDecoder(TransformerConfig.from_namespace(args), task.target_dictionary, embed_tokens)
-        if args.frozen_plm:
-            for name, parameter in decoder.named_parameters():
-                print(name, parameter.numel())
-                if "adapters" in name:
-                    parameter.requires_grad = True
-                else:
-                    parameter.requires_grad = False
+
         decoder_total_num = sum(p.numel() for p in decoder.parameters())
         decoder_trainable_num = sum(p.numel() for p in decoder.parameters() if p.requires_grad)
         print({'Total': decoder_total_num, 'Trainable': decoder_trainable_num})
@@ -647,14 +618,6 @@ class DeltalmTransformerEncoder(FairseqEncoder):
 
             self.dim_proj.append(nn.Linear(hubert_args.model.encoder_embed_dim, args.encoder_embed_dim))
 
-        ## deltalm encoder
-        # self.transformer_layers = 
-        transformer_encoder_config = TransformerConfig.from_namespace(args)
-
-
-        transformer_encoder_config.adapters_activation_fn = args.adapters_activation_fn
-        transformer_encoder_config.adapters_bottle = args.adapters_bottle
-        transformer_encoder_config.adapters_static_layernorm =  args.adapters_static_layernorm  
 
  
         # config.prefix_length, config.encoder_layers * 2 * config.encoder_embed_dim
@@ -780,19 +743,6 @@ class DeltalmTransformerEncoder(FairseqEncoder):
 
         self.embed_tokens.load_state_dict(embed_tokens_dict, strict=False)
         self.embed_positions.load_state_dict(embed_positions_dict, strict=False)
-
-    ## end
-
-
-        self.adapters = nn.ModuleList([])
-        for i in range(len(self.transformer_layers)):
-            self.adapters.append(Adapter(transformer_encoder_config.encoder.embed_dim,
-                                            args.adapters_bottle,
-                                            args.adapters_activation_fn,
-                                            args.adapters_static_layernorm))
-
-
-
 
 
     def build_encoder_layer(self, cfg):

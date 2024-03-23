@@ -195,7 +195,7 @@ def upgrade_state_dict_for_deltalm(args,
 
     return state_dict
 
-@register_model("deltalm_transformer_adapter_emd")
+@register_model("deltalm_transformer_ffn")
 class DeltalmTransformerModel(FairseqEncoderDecoderModel):
     """Adapted Transformer model (https://arxiv.org/abs/1706.03762) for
     speech-to-text tasks. The Transformer encoder/decoder remains the same.
