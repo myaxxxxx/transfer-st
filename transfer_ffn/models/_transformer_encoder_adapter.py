@@ -46,7 +46,7 @@ class AdapterTransformerEncoderBase(FairseqEncoder):
         embed_tokens (torch.nn.Embedding): input embedding
     """
 
-    def __init__(self, cfg, dictionary, embed_tokens, return_fc=False):
+    def __init__(self, cfg, dictionary, embed_tokens, encoder_ffn, return_fc=False):
         self.cfg = cfg
         super().__init__(dictionary)
         self.register_buffer("version", torch.Tensor([3]))
@@ -104,14 +104,7 @@ class AdapterTransformerEncoderBase(FairseqEncoder):
             self.layer_norm = None
 
 
-        self.adapters = nn.ModuleList([])
-        for i in range(cfg.encoder_layers):
-            self.adapters.append(Adapter(embed_dim,
-                                            cfg.adapters_bottle,
-                                            cfg.adapters_activation_fn,
-                                            cfg.adapters_static_layernorm))
-
-        print(self.adapters)
+        self.ffn = encoder_ffn
 
 
 
@@ -250,8 +243,8 @@ class AdapterTransformerEncoderBase(FairseqEncoder):
                 x = lr
                 fc_result = None
 
-## adapters 
-            x = self.adapters[index](x)
+## ffn 
+            x = self.ffn[index](x)
 
 
             if return_all_hiddens and not torch.jit.is_scripting():
@@ -364,7 +357,7 @@ class AdapterTransformerEncoderBase(FairseqEncoder):
 
 
 class AdapterTransformerEncoder(AdapterTransformerEncoderBase):
-    def __init__(self, args, dictionary, embed_tokens, return_fc=False):
+    def __init__(self, args, dictionary, embed_tokens, encoder_ffn, return_fc=False):
         self.args = args
         super().__init__(
             TransformerConfig.from_namespace(args),

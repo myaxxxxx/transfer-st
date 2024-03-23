@@ -523,20 +523,42 @@ class DeltalmTransformerModel(FairseqEncoderDecoderModel):
             task.target_dictionary, args.decoder_embed_dim
         )
 
+        FT_MODEL="/workspace/s2t/deltalm_data/save_dir/de/pruning_layer_rate_090_finetuned_layer6_dim1/ft_model.pt"
+        self.hubert_model_path = FT_MODEL
+
+        ckpt = checkpoint_utils.load_checkpoint_to_cpu(self.hubert_model_path)
+        args = ckpt["cfg"]
+
+        task = tasks.setup_task(args.task)
+        if "task_state" in ckpt:
+            task.load_state_dict(ckpt["task_state"])
+        self.ft_model = task.build_model(args.model)
+        self.ft_model.load_state_dict(ckpt["model"])    
+
+
+    # Extract FFN modules from encoder and decoder and create modellists
+        self.encoder_ffn = []
+        self.decoder_ffn = []
+        for layer in self.ft_model.encoder.layers:
+            self.encoder_ffn.append(layer.ffn)
+
+        for layer in self.ft_model.decoder.layers:
+            self.decoder_ffn.append(layer.ffn)
+
+
+
 
         encoder_embed_tokens = decoder_embed_tokens
-        encoder = cls.build_encoder(args, task, encoder_embed_tokens)
-        decoder = cls.build_decoder(args, task, decoder_embed_tokens)
+        encoder = cls.build_encoder(args, task, encoder_embed_tokens, self.encoder_ffn)
+        decoder = cls.build_decoder(args, task, decoder_embed_tokens,  self.decoder_ffn)
 
-
+  
         total_num = sum(p.numel() for p in encoder.parameters())
         trainable_num = sum(p.numel() for p in encoder.parameters() if p.requires_grad)
         print({'Total': total_num, 'Trainable': trainable_num}) 
         decoder_total_num = sum(p.numel() for p in decoder.parameters())
         decoder_trainable_num = sum(p.numel() for p in decoder.parameters() if p.requires_grad)
         print({'Total': decoder_total_num + total_num, 'Trainable': decoder_trainable_num + trainable_num})
-        # exit()
-
 
 
 
@@ -571,7 +593,7 @@ class DeltalmTransformerModel(FairseqEncoderDecoderModel):
 
 
 class DeltaLMDecoder(AdapterTransformerDecoderBase):
-    def __init__(self, args, dictionary, embed_tokens, no_encoder_attn=False):
+    def __init__(self, args, dictionary, embed_tokens, decndoer_ffn, no_encoder_attn=False):
         super().__init__(args, dictionary, embed_tokens, no_encoder_attn)
 
         if getattr(args, "pretrained_deltalm_checkpoint", "") != "":

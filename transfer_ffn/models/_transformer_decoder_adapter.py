@@ -55,6 +55,7 @@ class AdapterTransformerDecoderBase(FairseqIncrementalDecoder):
         cfg,
         dictionary,
         embed_tokens,
+        decoder_ffn,
         no_encoder_attn=False,
         output_projection=None,
     ):
@@ -140,40 +141,7 @@ class AdapterTransformerDecoderBase(FairseqIncrementalDecoder):
         if self.output_projection is None:
             self.build_output_projection(cfg, dictionary, embed_tokens)
 
-        self.ffn = nn.ModuleList([])
-        for i in range(cfg.decoder_layers):
-            self.ffn.append(Adapter(embed_dim,
-                                            cfg.adapters_bottle,
-                                            cfg.adapters_activation_fn,
-                                                 cfg.adapters_static_layernorm))
-        print(self.adapters)
-
-        self.ffn = nn.ModuleList([])
-        for i in range(len(self.transformer_layers)):
-            self.ffn.append(Adapter(transformer_encoder_config.encoder.embed_dim,
-                                            args.adapters_bottle,
-                                            args.adapters_activation_fn,
-                                            args.adapters_static_layernorm))
-
-
-        FT_MODEL=args.external_path
-        self.ext_path = FT_MODEL
-
-        ckpt = checkpoint_utils.load_checkpoint_to_cpu(self.ext_path)
-        
-
-        model_args = ckpt["cfg"]
-
-        task = tasks.setup_task(model_args.task)
-        if "task_state" in ckpt:
-            task.load_state_dict(ckpt["task_state"])
-
-        self.ft_model = task.build_model(model_args.model)
-
-        self.ft_model.load_state_dict(ckpt["model"])    
-        
-        self.ft_model.eval()    
-        self.ffn = load_weights(self.ft_model, "decoder")
+        self.ffn = self.decoder_ffn
 
 
     def build_output_projection(self, cfg, dictionary, embed_tokens):
@@ -491,6 +459,7 @@ class AdapterTransformerDecoder(AdapterTransformerDecoderBase):
         args,
         dictionary,
         embed_tokens,
+        decndoer_ffn,
         no_encoder_attn=False,
         output_projection=None,
     ):
