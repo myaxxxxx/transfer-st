@@ -107,3 +107,9 @@ fairseq-train $data_dir --text-data $TEXT_DIR --tgt-lang $target \
 ### Machine Translation Pre-trained Model
 
 - We use [Deltalm-Base](https://deltalm.blob.core.windows.net/deltalm/deltalm-base.pt) as the machine translation pre-trained model. 
+
+
+
+### Acknowledgment
+
+We refer to the code of [Transfer-NMT (Knowledge Transfer in Incremental Learning for Multilingual Neural Machine Translation)](https://github.com/THUNLP-MT/ktnmt). Thanks for their great contributions!
