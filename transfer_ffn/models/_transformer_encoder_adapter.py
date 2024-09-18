@@ -26,6 +26,89 @@ from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from ._adapters import Adapter
 
+from typing import Dict, List, Optional
+
+import torch
+import torch.nn as nn
+from torch import Tensor
+
+from fairseq import utils
+from fairseq.models.transformer import TransformerConfig
+from fairseq.modules import LayerNorm, MultiheadAttention
+from fairseq.modules.fairseq_dropout import FairseqDropout
+from fairseq.modules.quant_noise import quant_noise
+
+class TransformerEncoderLayerFFN(nn.Module):
+
+    def __init__(
+        self, cfg
+    ):
+        super().__init__()
+        self.dropout_module = FairseqDropout(
+            cfg.dropout, module_name=self.__class__.__name__
+        )
+        self.activation_fn = utils.get_activation_fn(activation=cfg.activation_fn)
+        activation_dropout_p = cfg.activation_dropout
+        self.activation_dropout_module = FairseqDropout(
+            float(activation_dropout_p), module_name=self.__class__.__name__
+        )
+        self.normalize_before = cfg.decoder.normalize_before
+        self.ffn_layernorm = (
+            LayerNorm(cfg.decoder.ffn_embed_dim)
+            if utils.safe_getattr(cfg, "scale_fc", False)
+            else None
+        )
+
+        self.fc1 = self.build_fc1(
+            self.embed_dim,
+            cfg.encoder.ffn_embed_dim,
+            self.quant_noise,
+            self.quant_noise_block_size,
+        )
+        self.fc2 = self.build_fc2(
+            cfg.encoder.ffn_embed_dim,
+            self.embed_dim,
+            self.quant_noise,
+            self.quant_noise_block_size,
+        )
+
+        self.final_layer_norm = LayerNorm(self.embed_dim, export=cfg.export)
+
+    def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
+        return quant_noise(
+            nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size
+        )
+
+    def build_fc2(self, input_dim, output_dim, q_noise, qn_block_size):
+        return quant_noise(
+            nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size
+        )
+
+    def residual_connection(self, x, residual):
+        return residual + x
+
+
+    def forward(
+        self,
+        x,
+    ):
+
+
+        residual = x
+        if self.normalize_before:
+            x = self.final_layer_norm(x)
+        x = self.activation_fn(self.fc1(x))
+        x = self.activation_dropout_module(x)
+        x = self.fc2(x)
+
+        fc_result = x
+
+        x = self.dropout_module(x)
+        x = self.residual_connection(x, residual)
+        if not self.normalize_before:
+            x = self.final_layer_norm(x)
+        return x
+
 
 # rewrite name for backward compatibility in `make_generation_fast_`
 def module_name_fordropout(module_name: str) -> str:
@@ -103,7 +186,8 @@ class AdapterTransformerEncoderBase(FairseqEncoder):
         else:
             self.layer_norm = None
 
-
+        
+        encoder_ffn = [encoder_layer.ffn for encoder_layer in transformer.encoder_layers]
         self.ffn = encoder_ffn
 
 
